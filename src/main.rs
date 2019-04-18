@@ -235,64 +235,88 @@ fn profile(reads: HashMap<String, Vec<i32>>, genome: &Arc<HashMap<String, String
             let all = genome.get(*chr).unwrap();
             let chrl = all.len() as i32;
 
-            let mut lastq: Vec<String> =  Vec::new();
-            let mut lastd: Vec<i32> =  Vec::new();
-            let mut has_neigbour = false;
-            let mut diff = 0;
+            //let mut lastq: Vec<String> =  Vec::new();
+            //let mut lastd: Vec<i32> =  Vec::new();
+            //let mut has_neigbour = false;
+            //let mut diff = 0;
 
             for (it,read) in tmp.iter().enumerate() {
 
-                stop += 1;
-
-                if stop > 1{
-                    process::exit(0x0);
-                }
-
-                let mut left = cmp::max(0, read - radius - q / 2);
-                let mut right = cmp::min(read + radius + q / 2, chrl) - q;
+                let left = cmp::max(0, read - radius - q / 2);
+                let right = cmp::min(read + radius + q / 2, chrl) - q;
                 let mut i = 0;
 
-                if has_neigbour{
-                    has_neigbour = false;
-                    for (s,qmer) in lastq.iter().enumerate(){
-                        if lastd[s] > 0 && lastd[s] < radius - diff {
-                            let mut vec: &mut Vec<i32> = profile.entry(qmer.parse().unwrap()).or_default();
-                            let pos = (diff + lastd[s]) as usize;
-                            //println!("diff {} last {} pos {} {:?} {:?}", diff, lastd[s], pos ,lastd, lastq);
+                /*
+                    if has_neigbour{
+                        has_neigbour = false;
+                        for (s,qmer) in lastq.iter().enumerate(){
+                            if lastd[s] > 0 && lastd[s] < radius - diff {
+                                let mut vec: &mut Vec<i32> = profile.entry(qmer.parse().unwrap()).or_default();
+                                let pos = (diff + lastd[s]) as usize;
+                                //println!("diff {} last {} pos {} {:?} {:?}", diff, lastd[s], pos ,lastd, lastq);
 
-                            vec[pos] = vec[pos] + 1;
+                                vec[pos] = vec[pos] + 1;
 
-                            println!("Setting +1 at {} for {} ",pos , qmer);
+                                println!("Setting +1 at {} for {} ",pos , qmer);
+                            }
+                        }
+
+                        left = right - diff;
+                        //println!("right {} new left {}", right , left );
+                    }
+
+                    if it + 1 < tmp.len() {
+                        diff = tmp.get(it + 1).unwrap() - read;
+                    } else {
+                        diff = 100;
+                    }
+
+                    if  diff < 10 { //if there is a next read and this one is less  than 10 pos away
+
+                        if lastd.len() > 1 {
+                            for v in 0..lastd.len() {
+                                lastd[v] = lastd[v] - diff;
+                            }
+                        }
+
+
+                        has_neigbour = true;
+                        //println!("read {} neigbour {} diff {} ", read, tmp.get(it+1).unwrap(), diff);
+
+                    } else {
+                        let mut lastq: Vec<String> =  Vec::new();
+                        let mut lastd: Vec<i32> =  Vec::new();
+                        left = cmp::max(0, read - radius - q / 2);
+                    }
+
+
+                    for p in left..right + 1{
+                        let qmer = &all[p as usize..(p + (q as i32)) as usize];
+
+                        if qmer.contains("n") {
+                            i += 1;
+                            continue;
+                        }
+
+                        let vec = profile.entry(qmer.to_string()).or_insert(vec![0; (radius * 2 + 1) as usize]);
+
+                        vec[i] = vec[i] + 1;
+                        i += 1;
+                        println!("Setting +1 at {} for {} ",i ,qmer);
+
+                        if has_neigbour && left > diff {
+                            lastq.push(qmer.parse().unwrap());
+                            lastd.push(i as i32);
                         }
                     }
 
-                    left = right - diff;
-                    //println!("right {} new left {}", right , left );
-                }
 
-                if it + 1 < tmp.len() {
-                    diff = tmp.get(it + 1).unwrap() - read;
-                } else {
-                    diff = 100;
-                }
+                    println!("original:");
 
-                if  diff < 10 { //if there is a next read and this one is less  than 10 pos away
+                let right = cmp::min(read + radius + q / 2, chrl) - q;
+                let left = cmp::max(0, read - radius - q / 2);
+                    */
 
-                    if lastd.len() > 1 {
-                        for v in 0..lastd.len() {
-                            lastd[v] = lastd[v] - diff;
-                        }
-                    }
-
-
-                    has_neigbour = true;
-                    //println!("read {} neigbour {} diff {} ", read, tmp.get(it+1).unwrap(), diff);
-
-                } else {
-                    let mut lastq: Vec<String> =  Vec::new();
-                    let mut lastd: Vec<i32> =  Vec::new();
-                    left = cmp::max(0, read - radius - q / 2);
-                }
 
 
                 for p in left..right + 1{
@@ -307,30 +331,8 @@ fn profile(reads: HashMap<String, Vec<i32>>, genome: &Arc<HashMap<String, String
 
                     vec[i] = vec[i] + 1;
                     i += 1;
-                    println!("Setting +1 at {} for {} ",i ,qmer);
 
-                    if has_neigbour && left > diff {
-                        lastq.push(qmer.parse().unwrap());
-                        lastd.push(i as i32);
-                    }
-                }
-
-
-                println!("original:");
-
-                right = cmp::min(read + radius + q / 2, chrl) - q;
-                left = cmp::max(0, read - radius - q / 2);
-
-
-                for p in left..right + 1{
-                    let qmer = &all[p as usize..(p + (q as i32)) as usize];
-
-                    if qmer.contains("n") {
-                        i += 1;
-                        continue;
-                    }
-
-                    println!("Setting +1 at {} for {} ",i ,qmer);
+                    //println!("Setting +1 at {} for {} ",i ,qmer);
                 }
 
             }
