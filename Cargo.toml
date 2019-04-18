@@ -1,0 +1,14 @@
+[package]
+name = "rust_profile"
+version = "0.1.0"
+authors = ["Michael Menzel <michael.menzel@mni.thm.de>"]
+edition = "2018"
+
+[dependencies]
+crossbeam-channel = "0.3.8"
+
+[profile.dev]
+opt-level = 3
+
+[profile.release]
+opt-level = 3
