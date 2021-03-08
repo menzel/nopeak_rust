@@ -11,17 +11,25 @@ use std::fs;
 use std::sync::{mpsc, Arc};
 use std::env;
 
-//const CHROMOSOMES: &'static [&'static str] = &["chr1","chr2","chr3","chr4","chr5","chr6","chr7",
-//"chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19",
-//"chr20","chr21","chr22", "chrX", "chrY"];
+const CHROMOSOMES: &'static [&'static str] = &["chr1","chr2","chr3","chr4","chr5","chr6","chr7",
+"chr8","chr9","chr10","chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19",
+"chr20","chr21","chr22", "chrX", "chrY"];
 
-const CHROMOSOMES: &'static [&'static str] = &["chr1","chrY"];
+//const CHROMOSOMES: &'static [&'static str] = &["chr1","chrY"];
 
 
 
 fn main() {
 
     let args : Vec<String> = env::args().collect();
+
+    if args.len() < 4 {
+        println!("Usage: ./rust_profile reads genome_fasta k-mer_lenght radius");
+        println!("Example: ./rust_profile reads.bed hg19.fa 8 500");
+
+        process::exit(0x0);
+    }
+
     let readpath = args.get(1).unwrap(); //"/home/menzel/Desktop/THM/promotion/projekte/nopeak/rust_profile/test.bed";
 
     let genomepath  = args.get(2).unwrap(); // "/home/menzel/hg19.fa";
@@ -41,6 +49,7 @@ fn create_profile(readpath: String, genomepath: String, q : i32, radius : i32){
     println!("{} from {}", "read reads", readpath);
 
     tmp = read_reads(&readpath);
+    let readcount = tmp.0.len() + tmp.1.len();
 
     let reads_p = tmp.0;
     let reads_n = tmp.1;
@@ -98,9 +107,8 @@ fn create_profile(readpath: String, genomepath: String, q : i32, radius : i32){
 
     //write profile to file
     println!("{}", "write profiles");
-    let filepath = "/tmp/result";
-    let readcount = 0;
-    write_to_file(filepath, result, genomepath.to_string(), readpath.to_string(), radius, q, readcount);
+    let filepath = "result.csv";
+    write_to_file(filepath, result, genomepath.to_string(), readpath.to_string(), radius, q, readcount as i32);
 
 }
 
@@ -157,14 +165,14 @@ fn write_to_file(pathstr: &str, result : HashMap<String, Vec<i32>>, genomepath :
         eprintln!("Couldn't write to file: {}", e);
     }
 
-    let header = ["qmer\t".to_string(), (0..(radius * 2 + 2)).map(|x| x.to_string()).collect::<Vec<String>>().join("\t")].concat();
+    let header = ["qmer\t".to_string(), (1..(radius * 2 + 2)).map(|x| x.to_string()).collect::<Vec<String>>().join("\t")].concat();
     if let Err(e) = writeln!(file, r"{}", header) {
         eprintln!("Couldn't write to file: {}", e);
     }
 
     // sort by kmer before writing
-    //let mut keys : Vec<String> = result.clone().into_iter().map(|(k, _v)| k.to_string()).collect();
-    //keys.sort();
+    let mut keys : Vec<String> = result.clone().into_iter().map(|(k, _v)| k.to_string()).collect();
+    keys.sort();
 
     for qmer in result.keys(){
 
@@ -228,8 +236,13 @@ fn profile(reads: HashMap<String, Vec<i32>>, genome: &Arc<HashMap<String, String
 
     for chr in CHROMOSOMES{
         println!("currently on {}", chr);
-        let mut tmp = reads.get(*chr).unwrap();
-        let mut stop = 0;
+
+        if !reads.contains_key(*chr){
+            continue
+        }
+
+        let tmp = reads.get(*chr).unwrap();
+        //let mut stop = 0;
 
         if genome.contains_key(*chr) {
             let all = genome.get(*chr).unwrap();
